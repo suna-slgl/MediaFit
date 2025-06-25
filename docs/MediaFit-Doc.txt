@@ -58,6 +58,38 @@ MediaFit-ai-workout-app
 
 
 
+PROJE YAPIM AŞAMALARI=
+1. Proje Ortamının Kurulumu
+	Gerekli Python sürümünü ve bağımlılıkları belirle.
+	Gerekirse bir sanal ortam (virtualenv, conda) oluştur.
+	Gerekli kütüphaneleri (ör. mediapipe, numpy, pandas, matplotlib, vs.) yükle.
+2. Veri Hazırlığı
+	data/raw/ klasörüne egzersiz veri setlerini (gerekirse OpenPose ile işlenmiş) ekle.
+	Verileri analiz edip, gerekirse ön işleme (temizleme, formatlama) uygula ve data/processed/ klasörüne kaydet.
+3. Temel Hareket Algılama Modülünü Geliştir
+	src/pose/ altında MediaPipe ile vücut eklem noktalarını tespit eden temel bir Python modülü oluştur.
+	Test verileriyle çalışıp doğru şekilde eklem noktalarını bulduğundan emin ol.
+4. Açı Hesaplama ve Analiz
+	src/analysis/ altında eklem noktalarından açı hesaplayan fonksiyonlar yaz.
+	Vektör tabanlı açı hesaplama ve üçgenleme yöntemlerini uygula.
+	Hesaplanan açıları referans açı değerleriyle karşılaştıracak bir yapı kur.
+5. Doğruluk ve Tolerans Analizi
+	Standart sapma ve tolerans aralığı hesaplamalarını uygula.
+	Kullanıcı hareketlerinin doğruluğunu bu toleranslara göre değerlendir.
+6. Geri Bildirim Sistemi
+	src/feedback/ altında, analiz sonuçlarına göre kullanıcıya anlık veya özet geri bildirim verecek fonksiyonlar geliştir.
+	Doğru/yanlış yapılan hareketleri ve başarı oranını raporla.
+7. Kullanıcı Arayüzü (UI)
+	src/ui/ altında temel bir arayüz prototipi oluştur (ör. komut satırı veya basit bir web arayüzü).
+	Sonrasında Flutter ile mobil arayüz geliştirmeye başla.
+8. Testler ve Doğrulama
+	tests/ klasöründe birim testler ve entegrasyon testleri yaz.
+	Tüm modüllerin doğru çalıştığından emin ol.
+9. Raporlama ve Görselleştirme
+	Kullanıcıya haftalık egzersiz karnesi, gelişim grafiği gibi görseller sunacak fonksiyonlar ekle.
+10. Dokümantasyon ve Son Rötuşlar
+	README.md ve docs/ klasörünü güncelle.
+	Kullanım kılavuzu, kurulum ve örnek kullanım senaryoları ekle.
 
 
 
