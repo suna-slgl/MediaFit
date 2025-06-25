@@ -1,0 +1,64 @@
+PROJE  ADI= 
+MediaFit: Yapay Zeka Tabanlı Mobil Uygulama ile Gerçek Zamanlı Kişisel Egzersiz Hareketlerinin Doğruluk Analizi ve Anlık Geri Bildirim Sistemi
+
+
+
+AMAÇ VE HEDEFLER==
+Bu projenin amacı, kullanıcıların hareketlerinin doğru bir şekilde izlenmesini sağlayarak performanslarını artırmayı, antrenman sırasında doğru hareketlerin yapılmasıyla sakatlanma riskini en aza indirmeyi ve ulaşılabilir, kullanıcı dostu bir uygulama sunmaktır. Bu amaca dayalı alt hedefler ise; 
+● Egzersiz Hareketlerinin Algılanması: Farklı egzersiz hareketlerinin doğru bir şekilde algılanması için uygun veri setlerinin kullanılması ve bu verilerin analiz edilmesi. 
+● Egzersiz Hareketlerinin Doğruluk Tespiti: Python ve MediaPipe kütüphanesi kullanılarak, vücuttaki eklem noktalarının 3D koordinatlarının tespit edilmesi ve eklemler arasındaki açılarla hareket doğruluğunun belirlenmesi. 
+● Standart Sapma ile Tolerans Aralığı Hesaplama: Kullanıcı hareketlerinin doğruluğunu belirlemek amacıyla, açı ölçülerinin hesaplanan standart sapma değerleriyle karşılaştırılarak kabul edilebilir tolerans aralığında kalıp kalmadığının değerlendirilmesi. 
+● Doğru Hareket Aralığı Belirleme: Hesaplanan açıların belirlenen referans Exercise-DB (OpenPose ile işlenmiş) veri setinden alınan referans açılarla karşılaştırılması yoluyla doğru ve yanlış yapılan hareketlerin tespiti. 
+● Hareketlere Geri Bildirim Verme: Kullanıcı egzersiz setini tamamladıktan sonra, doğru ve yanlış yapılan hareketlerle ilgili özet bir rapor sunulabilir. Bu raporda; kaç hareketin doğru yapıldığı, hangi hareketlerde hata yapıldığı ve genel başarı oranı gibi bilgiler yer alabilir. Grafikler veya yüzde göstergeleri ile kullanıcıya görsel olarak performansı gösterilebilir. Uygulama içinde “Haftalık Egzersiz Karnesi”, “Gelişim Grafiği” gibi bölümler eklenerek, kullanıcının belirli bir dönemdeki gelişim trendleri sunulabilir.
+
+
+
+YÖNTEM=
+Bu çalışmanın yöntemi yedi aşamadan oluşmaktadır. Bu aşamalar; egzersiz planının oluşturulması, vücut yönü kontrolü, görsel analiz, kullanıcı hareketlerinin açı değişimlerine dayalı zaman ve sıra analizi, standart sapma ile tolerans aralığı hesaplama, egzersiz hareketlerinin doğruluk tespiti ve hareketlere geri bildirim verme şeklindedir. 
+Bu projede, kullanıcı hareketlerinin doğru analizini sağlamak amacıyla çeşitli yazılım ve analiz araçları kullanılacaktır. Kullanıcı arayüzü geliştirilirken etkileşimli bir deneyim sunmak hedeflenmiştir. Bu kapsamda, mobil uygulama geliştirme için çok platformlu bir çözüm olan Flutter kullanılacaktır. 
+Referans açılar, belirlenen hareketlerin doğru yapılabilmesi için kullanıcıya baz oluşturacaktır. Kullanıcı bir hareket yaptığında, vücudundaki eklem noktalarının pozisyonları ve açılar tespit edilecek ve referans açılar ile karşılaştırılacaktır. 
+Kullanıcının hareketlerinin doğru olup olmadığı analiz edilerek, anında sesli ya da görsel geri bildirim verilecektir. Bu yöntemle, kullanıcı hareketi doğru yapmadığında sistem uyarı vererek düzeltilmesi için rehberlik sağlayacaktır.
+
+	1. Egzersiz Planının Oluşturulması: Bu aşamada kullanıcı, uygulama üzerinden yapacağı egzersizleri seçerek bir plan oluşturur. Belirlenen plana göre, kullanıcının hangi hareketleri yapacağı ve bu hareketlerin nasıl yapılması gerektiği belirlenir. 
+	2. Vücut Yönü Kontrolü: Vücut yönü kontrolü, Python kullanılarak MediaPipe kütüphanesi ile gerçekleştirilecektir. Bu yöntemle, kullanıcının vücudundaki önemli referans noktaları (omuzlar, kalça, dizler) tespit edilmekte ve bu noktaların uzaysal konumları kullanılarak kullanıcının vücut pozisyonu ve yönü hesaplanmaktadır. Tespit edilen bu noktalar aracılığıyla, kullanıcının vücut yönündeki sapmalar (sağ, sol, yukarı, aşağı) belirlenmekte ve referans pozisyonla karşılaştırılarak analiz edilmektedir. 
+Vücut pozisyonunun doğruluğu, hareketin gerektirdiği pozisyona uygun olup olmadığı ile karşılaştırılarak değerlendirilir. Eğer kullanıcının vücut pozisyonu istenilen yönden sapmışsa, uygulama kullanıcıya pozisyonunu düzeltmesi için geri bildirim sağlar. 
+	3. Görsel Analiz: Bu aşamada, kullanıcıların seçtikleri egzersizleri doğru şekilde yapıp yapmadıklarının belirlenmesi hedeflenir. Python ve MediaPipe kütüphanesi kullanılarak, vücut üzerindeki eklem noktaları tespit edilir ve bu noktalar arasındaki açılar hesaplanır. MediaPipe, eklemler arası açıları ölçmek için birkaç temel bilgisayarla görme ve geometri algoritması kullanır. Bu algoritmalar, vücuttaki belirli kilit noktaların koordinatları ile açıları hesaplamak üzere vektör tabanlı yaklaşımlar kullanır. İşte MediaPipe'ın eklemler arası açıları ölçmek için kullandığı temel algoritmalar:
+	3.a. Vektör Tabanlı Açı Hesaplama (Dot Product)
+MediaPipe tarafından tespit edilen her eklem noktası, x, y ve z koordinatları ile ifade edilerek birer vektör olarak varsayılmıştır. Nokta çarpımı yaklaşımına göre, iki vektör arasındaki açı, iki vektörün nokta çarpımının ters kosinüsü, büyüklüklerinin çarpımına bölünerek hesaplanır.
+	3.b. Üçgenleme Yöntemi 
+Vücutta üç veya daha fazla kilit noktadan oluşan açılar için MediaPipe, üçgenleme kullanabilir. Örneğin, kalça, diz ve ayak bileği arasındaki açıyı bulurken, bu üç eklem noktası bir üçgen oluşturur. Üçgenin iç açısını bulmak için geometrik üçgenleme formülleri kullanıllabilir. Üçgen kenar uzunluklarını hesaplayarak açıyı kosinüs teoremi ile bulabilir.
+	4. Kullanıcı Hareketlerinin Açı Değişimlerine Dayalı Zaman ve Sıra Analizi: Bu yöntem, kullanıcı tarafından gerçekleştirilen hareketlerin açı değişimlerinin zaman içerisindeki seyri doğrultusunda analiz edilerek, hareketlerin doğru sıralamayla yapılıp yapılmadığını değerlendirmeye odaklanmaktadır. Açı değişimlerinin zamanla olan ilişkisi incelenerek, kullanıcının hareketlerinin istenen sıralamaya uygunluğu tespit edilir. 
+	5. Standart Sapma ile Tolerans Aralığı Hesaplama: Ortalama (mean), bir veri setindeki tüm değerlerin toplamının, veri sayısına bölünmesiyle bulunur. Standart sapma (σ), veri setindeki değerlerin ortalamadan ne kadar uzaklaştığını ölçer. Daha yüksek bir standart sapma, verilerin daha geniş bir aralıkta dağılmış olduğunu gösterir. Standart sapma aşağıdaki formül ile ölçülür. Tolerans aralığı, belirli bir ölçüm veya hareketin kabul edilebilir sınırlarını belirler. Genellikle ortalamadan belirli bir sapma aralığı olarak ifade edilir. Bu formülde ortalama değerden ± k x σ kadar sapma kabul edilebilir aralık olarak belirlenir. Örneğin, k=2 kullanıldığında, veri setinin ortalama değerine göre ±2 standart sapma aralığı kabul edilebilir sınırlar olarak alınır.
+	6. Egzersiz Hareketlerinin Doğruluk Tespiti: Doğru tespit için, belirli hareketlerde kullanıcının belirli pozisyonlarda bulunması gerekmektedir. Elde edilen açı değerleri, Exercise-DB (OpenPose ile işlenmiş) veri setinden alınan referans açı değerleriyle karşılaştırılarak hareketin doğruluğu değerlendirilir. 
+	7. Hareketlere Geri Bildirim Verme: Kullanıcı egzersiz setini tamamladıktan sonra, doğru ve yanlış yapılan hareketlerle ilgili özet bir rapor sunulabilir. Bu raporda; kaç hareketin doğru yapıldığı, hangi hareketlerde hata yapıldığı ve genel başarı oranı gibi bilgiler yer alabilir. Grafikler veya yüzde göstergeleri ile kullanıcıya görsel olarak performansı gösterilebilir. Uygulama içinde “Haftalık Egzersiz Karnesi”, “Gelişim Grafiği” gibi bölümler eklenerek, kullanıcının belirli bir dönemdeki gelişim trendleri sunulabilir.
+
+
+
+KULLANILAN DOSYA YAPISI=
+MediaFit-ai-workout-app
+├── data/
+│ ├── raw/
+│ └── processed/
+│
+├── notebooks/
+│
+├── src/
+│ ├── pose/
+│ ├── analysis/
+│ ├── feedback/
+│ ├── ui/
+│ └── utils/
+│
+├── tests/
+│
+├── docs/
+│
+├── LICENSE
+├── README.md
+
+
+
+
+
+
+
