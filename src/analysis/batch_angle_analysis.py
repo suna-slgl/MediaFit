@@ -50,3 +50,8 @@ if __name__ == "__main__":
             print(f"Doğru yapılan hareket oranı: {results_df['is_correct'].mean()*100:.1f}%")
         else:
             print("Veri bulunamadı.") 
+
+
+# Her egzersiz için ilgili eklem noktalarını ve referans açı/tolerans değerlerini kullanır.
+# Sonuç olarak, her frame’in açısını ve hareketin doğru/tolerans dahilinde olup olmadığını gösterir.
+# Doğru yapılan hareket oranını da raporlar.
