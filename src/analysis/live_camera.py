@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QLabel, QPushButton, QComboBox, QVBoxLayout, QWidget
 )
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
-from PyQt5.QtGui import QImage, QPixmap
+from PyQt5.QtGui import QImage, QPixmap, QFont
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '.')))
 from angle_analysis import calculate_angle, is_movement_correct
@@ -77,15 +77,17 @@ class CameraThread(QThread):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("MediaFit - Canlı Egzersiz Analizi")
+        self.setWindowTitle("MediaFit")
         self.setGeometry(200, 200, 900, 700)
+        label_font = QFont()
+        label_font.setPointSize(12) 
         self.exercise_combo = QComboBox()
         self.exercise_combo.addItems(list(EXERCISE_CONFIG.keys()))
-        self.camera_label = QLabel("Kamera görüntüsü burada olacak")
+        self.camera_label = QLabel("LIVE")
         self.camera_label.setAlignment(Qt.AlignCenter)
         self.camera_label.setStyleSheet("background-color: #ddd; min-height: 400px;")
         self.angle_label = QLabel("Açı: -")
-        self.correct_label = QLabel("Doğruluk: -")
+        self.angle_label.setFont(label_font)
         self.start_button = QPushButton("Başlat")
         self.stop_button = QPushButton("Durdur")
         self.stop_button.setEnabled(False)
@@ -93,7 +95,6 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.exercise_combo)
         layout.addWidget(self.camera_label)
         layout.addWidget(self.angle_label)
-        layout.addWidget(self.correct_label)
         layout.addWidget(self.start_button)
         layout.addWidget(self.stop_button)
         container = QWidget()
@@ -121,10 +122,8 @@ class MainWindow(QMainWindow):
     def update_angle(self, angle, correct):
         if angle == -1:
             self.angle_label.setText("Açı: -")
-            self.correct_label.setText("Doğruluk: -")
         else:
             self.angle_label.setText(f"Açı: {angle:.1f}")
-            self.correct_label.setText(f"Doğruluk: {'Evet' if correct else 'Hayır'}")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
