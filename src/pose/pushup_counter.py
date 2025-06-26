@@ -1,6 +1,7 @@
 import cv2
 import mediapipe as mp
 import numpy as np
+import pandas as pd
 
 class PushUpCounter:
     def __init__(self):
@@ -36,4 +37,10 @@ class PushUpCounter:
 
     def reset(self):
         self.counter = 0
-        self.stage = None 
+        self.stage = None
+
+# Örneğin, 0. eklem noktasının ortalama x ve y'si
+df = pd.read_csv("data/raw/sample_keypoints.csv", comment='#')
+mean_x = df['joint_0_x'].mean()
+mean_y = df['joint_0_y'].mean()
+print("Eklem 0 ortalama konumu:", mean_x, mean_y) 
