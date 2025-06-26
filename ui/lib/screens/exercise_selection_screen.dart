@@ -7,11 +7,8 @@ class ExerciseSelectionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final exercises = [
-      {'name': 'Squat', 'desc': 'Bacak kaslarını güçlendirir.'},
-      {'name': 'Push-Up', 'desc': 'Göğüs ve kol kaslarını çalıştırır.'},
-      {'name': 'Plank', 'desc': 'Karın ve core bölgesi için ideal.'},
-      {'name': 'Lunge', 'desc': 'Denge ve bacak kasları için.'},
       {'name': 'Biceps Curl', 'desc': 'Kol kaslarını geliştirir.'},
+      {'name': 'Push-Up', 'desc': 'Göğüs ve kol kaslarını çalıştırır.'},
     ];
     return Scaffold(
       appBar: AppBar(
