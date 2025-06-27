@@ -11,7 +11,9 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '.')))
 from angle_analysis import calculate_angle, is_movement_correct
 
-# Dracula Tema Renkleri
+# =============================================================================
+# DRACULA TEMA RENK PALETİ
+# =============================================================================
 DRACULA_COLORS = {
     'bg': '#3a3d4a',           # Ana arka plan 
     'fg': '#f8f8f2',           # Ana metin
@@ -32,55 +34,70 @@ DRACULA_COLORS = {
     'border': '#6272a4'        # Kenarlık
 }
 
-# Egzersiz ayarları
+# =============================================================================
+# EGZERSİZ KONFİGÜRASYONU
+# =============================================================================
 EXERCISE_CONFIG = {
     'Biceps Curl': {
-        'joints': (11, 13, 15),
-        'ref_angle': 45,
-        'tolerance': 15
+        'joints': (11, 13, 15),  # Omuz, Dirsek, Bilek eklem indeksleri
+        'ref_angle': 45,         # Referans açı (derece)
+        'tolerance': 15          # Tolerans aralığı
     },
     'Pushup': {
-        'joints': (12, 14, 16),
-        'ref_angle': 90,
-        'tolerance': 20
+        'joints': (12, 14, 16),  # Sağ Omuz, Sağ Dirsek, Sağ Bilek
+        'ref_angle': 90,         # Referans açı (derece)
+        'tolerance': 20          # Tolerans aralığı
     }
 }
 
+# =============================================================================
+# MODERN BUTON SINIFI
+# =============================================================================
 class ModernButton(tk.Button):
-    """Modern görünümlü buton sınıfı"""
+    """Dracula temasına uygun modern buton sınıfı"""
     def __init__(self, parent, **kwargs):
         super().__init__(parent, **kwargs)
+        # Buton görünümünü yapılandır
         self.configure(
-            bg=DRACULA_COLORS['button_bg'],
-            fg=DRACULA_COLORS['button_fg'],
-            activebackground=DRACULA_COLORS['button_hover'],
-            activeforeground=DRACULA_COLORS['button_fg'],
-            relief='flat',
-            borderwidth=0,
-            padx=20,
-            pady=8,
-            font=('Roboto', 10, 'bold'),
-            cursor='hand2'
+            bg=DRACULA_COLORS['button_bg'],      # Normal arka plan
+            fg=DRACULA_COLORS['button_fg'],      # Font rengi
+            activebackground=DRACULA_COLORS['button_hover'],  # Hover arka plan
+            activeforeground=DRACULA_COLORS['button_fg'],     # Hover font rengi
+            relief='flat',                       # Düz kenarlık
+            borderwidth=0,                       # Kenarlık kalınlığı
+            padx=20,                             # Yatay padding
+            pady=8,                              # Dikey padding
+            font=('Roboto', 10, 'bold'),         # Font
+            cursor='hand2'                       # Fare imleci
         )
+        # Hover efektleri için event binding
         self.bind('<Enter>', self.on_enter)
         self.bind('<Leave>', self.on_leave)
     
     def on_enter(self, e):
+        """Fare butonun üzerine geldiğinde çalışır"""
         self.configure(bg=DRACULA_COLORS['button_hover'])
     
     def on_leave(self, e):
+        """Fare butondan ayrıldığında çalışır"""
         self.configure(bg=DRACULA_COLORS['button_bg'])
 
+# =============================================================================
+# KAMERA THREAD SINIFI
+# =============================================================================
 class CameraThread(threading.Thread):
+    """Kamera görüntüsünü işleyen ve açı hesaplayan thread sınıfı"""
     def __init__(self, exercise_name, callback_image, callback_angle):
         super().__init__()
-        self._run_flag = True
-        self.exercise_name = exercise_name
-        self.callback_image = callback_image
-        self.callback_angle = callback_angle
-        self.cap = None
+        self._run_flag = True                    # Thread çalışma bayrağı
+        self.exercise_name = exercise_name       # Seçilen egzersiz
+        self.callback_image = callback_image     # Görüntü güncelleme callback'i
+        self.callback_angle = callback_angle     # Açı güncelleme callback'i
+        self.cap = None                          # Kamera capture nesnesi
 
     def run(self):
+        """Thread'in ana çalışma döngüsü"""
+        # MediaPipe pose detection başlat
         mp_pose = mp.solutions.pose
         self.cap = cv2.VideoCapture(0)
         
@@ -89,64 +106,80 @@ class CameraThread(threading.Thread):
             print("Kamera açılamadı!")
             return
             
+        # Egzersiz konfigürasyonunu al
         config = EXERCISE_CONFIG[self.exercise_name]
-        joints = config['joints']
-        ref_angle = config['ref_angle']
-        tolerance = config['tolerance']
+        joints = config['joints']                # Eklem indeksleri
+        ref_angle = config['ref_angle']          # Referans açı
+        tolerance = config['tolerance']          # Tolerans
         
+        # MediaPipe pose detection ile ana döngü
         with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:
             while self._run_flag:
+                # Kameradan frame al
                 ret, frame = self.cap.read()
                 if not ret:
                     continue
                     
+                # BGR'den RGB'ye çevir (MediaPipe için)
                 image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 results = pose.process(image)
                 
+                # Açı hesaplama ve doğruluk kontrolü
                 try:
                     landmarks = results.pose_landmarks.landmark
+                    # Eklem koordinatlarını al
                     a = [landmarks[joints[0]].x * frame.shape[1], landmarks[joints[0]].y * frame.shape[0]]
                     b = [landmarks[joints[1]].x * frame.shape[1], landmarks[joints[1]].y * frame.shape[0]]
                     c = [landmarks[joints[2]].x * frame.shape[1], landmarks[joints[2]].y * frame.shape[0]]
+                    # Açıyı hesapla
                     angle = calculate_angle(a, b, c)
                     correct = is_movement_correct(angle, ref_angle, tolerance)
+                    # Açı bilgisini GUI'ye gönder
                     self.callback_angle(angle, correct)
                 except Exception:
+                    # Hata durumunda -1 gönder
                     self.callback_angle(-1, False)
                 
-                # Anahtar noktaları çiz
+                # Anahtar noktaları çiz (iskelet)
                 if results.pose_landmarks:
                     mp.solutions.drawing_utils.draw_landmarks(
                         frame, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
                 
-                # Görüntüyü Tkinter formatına çevir
+                # Görüntüyü Tkinter formatına çevir ve GUI'ye gönder
                 rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 self.callback_image(rgb_image)
                 
-                time.sleep(0.015)  # ~66 FPS
+                time.sleep(0.015) # Frame rate kontrolü (~66 FPS)
                 
+        # Kamera kaynağını serbest bırak
         self.release_camera()
 
     def stop(self):
+        """Thread'i durdur"""
         self._run_flag = False
         
     def release_camera(self):
+        """Kamera kaynağını serbest bırak"""
         if self.cap is not None:
             self.cap.release()
             self.cap = None
 
+# =============================================================================
+# ANA WINDOW SINIFI
+# =============================================================================
 class MainWindow:
+    """Ana uygulama penceresi sınıfı"""
     def __init__(self, root):
         self.root = root
         self.root.title("MediaFit")
-        self.root.geometry("500x900") 
+        self.root.geometry("500x900")            
         
         # Dracula temasını uygula
         self.apply_dracula_theme()
         
         # Thread değişkeni
-        self.thread = None
-        self.is_running = False
+        self.thread = None                       # Kamera thread'i
+        self.is_running = False                  # Çalışma durumu
         
         # GUI bileşenlerini oluştur
         self.create_widgets()
@@ -158,18 +191,18 @@ class MainWindow:
         self.root.bind('<Control-c>', self.on_closing)
 
     def apply_dracula_theme(self):
-        """Dracula temasını uygula"""
+        """Dracula temasını uygula - Renkler ve stiller"""
         self.root.configure(bg=DRACULA_COLORS['bg'])
         
         # Style yapılandırması
         style = ttk.Style()
         style.theme_use('clam')
         
-        # Frame style
+        # Frame stilleri
         style.configure('Dracula.TFrame', background=DRACULA_COLORS['bg'])
         style.configure('Card.TFrame', background=DRACULA_COLORS['frame_bg'], relief='flat')
         
-        # Label style
+        # Label stilleri
         style.configure('Dracula.TLabel', 
                        background=DRACULA_COLORS['bg'], 
                        foreground=DRACULA_COLORS['fg'],
@@ -185,7 +218,7 @@ class MainWindow:
                        foreground=DRACULA_COLORS['purple'],
                        font=('Roboto', 12))
         
-        # Combobox style
+        # Combobox stili
         style.configure('Dracula.TCombobox', 
                        fieldbackground=DRACULA_COLORS['frame_bg'],
                        background=DRACULA_COLORS['frame_bg'],
@@ -200,6 +233,7 @@ class MainWindow:
                  selectforeground=[('readonly', DRACULA_COLORS['fg'])])
 
     def create_widgets(self):
+        """GUI bileşenlerini oluştur ve yerleştir"""
         # Ana frame
         main_frame = ttk.Frame(self.root, style='Dracula.TFrame', padding="20")
         main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
@@ -210,11 +244,15 @@ class MainWindow:
         main_frame.columnconfigure(0, weight=1)
         main_frame.rowconfigure(2, weight=1)  # Sadece kamera satırı (row=2) genişlesin
         
-        # Başlık
+        # =====================================================================
+        # BAŞLIK BÖLÜMÜ
+        # =====================================================================
         title_label = ttk.Label(main_frame, text="MediaFit", style='Title.TLabel')
         title_label.grid(row=0, column=0, columnspan=2, pady=(0, 20))
         
-        # Egzersiz seçici kartı
+        # =====================================================================
+        # EGZERSİZ SEÇİCİ KARTI
+        # =====================================================================
         exercise_frame = ttk.Frame(main_frame, style='Dracula.TFrame', padding="15")
         exercise_frame.grid(row=1, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 20))
         exercise_frame.columnconfigure(1, weight=1)
@@ -228,7 +266,9 @@ class MainWindow:
         self.exercise_combo.set('Biceps Curl')
         self.exercise_combo.grid(row=0, column=1, sticky=(tk.W, tk.E))
         
-        # Kamera görüntüsü kartı - Sabit boyut
+        # =====================================================================
+        # KAMERA GÖRÜNTÜSÜ KARTI
+        # =====================================================================
         camera_frame = ttk.Frame(main_frame, style='Card.TFrame', padding="10")
         camera_frame.grid(row=2, column=0, columnspan=2, sticky=(tk.W, tk.E, tk.N, tk.S), pady=(0, 20))
         camera_frame.columnconfigure(0, weight=1)
@@ -247,7 +287,9 @@ class MainWindow:
         # Kamera label'ına sabit boyut ver (kamera açılmış haline göre)
         self.camera_label.configure(width=60)  # Kamera genişliğine uygun
         
-        # Açı bilgisi kartı - Sabit konum
+        # =====================================================================
+        # AÇI BİLGİSİ KARTI
+        # =====================================================================
         angle_frame = ttk.Frame(main_frame, style='Card.TFrame', padding="15")
         angle_frame.grid(row=3, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 20))
         
@@ -256,7 +298,9 @@ class MainWindow:
                                    font=('Roboto', 14, 'bold'))
         self.angle_label.grid(row=0, column=0, sticky=tk.W)
         
-        # Butonlar kartı - Sabit konum
+        # =====================================================================
+        # BUTONLAR KARTI
+        # =====================================================================
         button_frame = ttk.Frame(main_frame, style='Card.TFrame', padding="15")
         button_frame.grid(row=4, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 20))
         
@@ -274,13 +318,16 @@ class MainWindow:
         self.quit_button = ModernButton(button_frame, text="Çıkış", command=self.on_closing)
         self.quit_button.pack(side=tk.RIGHT)
         
-        # Alt bilgi - Sabit konum
+        # =====================================================================
+        # ALT BİLGİ
+        # =====================================================================
         info_label = ttk.Label(main_frame, text="Ctrl+C ile hızlı çıkış yapabilirsiniz", 
                               style='Dracula.TLabel',
                               font=('Roboto', 9))
         info_label.grid(row=5, column=0, columnspan=2, pady=(10, 0))
 
     def start_camera(self):
+        """Kamera thread'ini başlat"""
         if self.is_running:
             return
             
@@ -289,11 +336,13 @@ class MainWindow:
         self.stop_button.config(state="normal")
         exercise = self.exercise_var.get()
         
+        # Kamera thread'ini oluştur ve başlat
         self.thread = CameraThread(exercise, self.update_image, self.update_angle)
         self.thread.daemon = True
         self.thread.start()
 
     def stop_camera(self):
+        """Kamera thread'ini durdur"""
         if not self.is_running:
             return
             
@@ -312,6 +361,7 @@ class MainWindow:
         self.camera_label.config(text="LIVE CAMERA", image="", anchor='center')
 
     def update_image(self, rgb_image):
+        """Kamera görüntüsünü GUI'de güncelle"""
         if not self.is_running:
             return
             
@@ -336,6 +386,7 @@ class MainWindow:
             print(f"Görüntü güncelleme hatası: {e}")
 
     def update_angle(self, angle, correct):
+        """Açı bilgisini GUI'de güncelle"""
         if not self.is_running:
             return
             
@@ -348,6 +399,7 @@ class MainWindow:
             print(f"Açı güncelleme hatası: {e}")
 
     def on_closing(self, event=None):
+        """Uygulamayı güvenli şekilde kapat"""
         print("Uygulama kapatılıyor...")
         self.stop_camera()
         
@@ -358,8 +410,7 @@ class MainWindow:
         except:
             pass
         
-        # Zorla çıkış
-        os._exit(0)
+        os._exit(0) # Zorla çıkış
 
 if __name__ == "__main__":
     try:
