@@ -6,51 +6,134 @@ class ReportsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Raporlarım'),
-        centerTitle: true,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Haftalık İstatistikler', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            Container(
-              height: 180,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.blueGrey.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Center(child: Text('LineChart/BarChart (Grafik Placeholder)')),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF282a36), Color(0xFF1e1f29)],
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Raporlar', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Color(0xFFf8f8f2))),
+                    CircleAvatar(
+                      radius: 25,
+                      backgroundColor: Color(0xFF44475a),
+                      child: Icon(Icons.person, color: Color(0xFFf8f8f2), size: 30),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8),
+                Text('Egzersiz geçmişiniz:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF6272a4))),
+                SizedBox(height: 20),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: 5,
+                    itemBuilder: (context, index) {
+                      return _ReportCard(
+                        title: 'Egzersiz ${index + 1}',
+                        date: '${DateTime.now().day - index}.${DateTime.now().month}.${DateTime.now().year}',
+                        accuracy: 85 - (index * 5),
+                        onTap: () {},
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 32),
-            const Text('Önceki Egzersizler', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 12),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ReportCard extends StatelessWidget {
+  final String title;
+  final String date;
+  final int accuracy;
+  final VoidCallback onTap;
+
+  const _ReportCard({
+    required this.title,
+    required this.date,
+    required this.accuracy,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: EdgeInsets.only(bottom: 16),
+        padding: EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Color(0xFF44475a),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 20,
+              offset: Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Color(0xFFbd93f9).withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.bar_chart, color: Color(0xFFbd93f9), size: 30),
+            ),
+            SizedBox(width: 16),
             Expanded(
-              child: ListView(
-                children: const [
-                  ListTile(
-                    leading: Icon(Icons.fitness_center),
-                    title: Text('Push-Up'),
-                    subtitle: Text('Başarı: %85'),
-                    trailing: Text('2 gün önce'),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFFf8f8f2),
+                    ),
                   ),
-                  ListTile(
-                    leading: Icon(Icons.fitness_center),
-                    title: Text('Squat'),
-                    subtitle: Text('Başarı: %78'),
-                    trailing: Text('4 gün önce'),
-                  ),
-                  ListTile(
-                    leading: Icon(Icons.fitness_center),
-                    title: Text('Plank'),
-                    subtitle: Text('Başarı: %92'),
-                    trailing: Text('1 hafta önce'),
+                  SizedBox(height: 4),
+                  Text(
+                    date,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF6272a4),
+                    ),
                   ),
                 ],
+              ),
+            ),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: accuracy >= 80 ? Color(0xFF50fa7b).withOpacity(0.2) : Color(0xFFffb86c).withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '$accuracy%',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: accuracy >= 80 ? Color(0xFF50fa7b) : Color(0xFFffb86c),
+                ),
               ),
             ),
           ],

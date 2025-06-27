@@ -7,37 +7,66 @@ class ExerciseSelectionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final exercises = [
-      {'name': 'Biceps Curl', 'desc': 'Kol kaslarını geliştirir.'},
-      {'name': 'Push-Up', 'desc': 'Göğüs ve kol kaslarını çalıştırır.'},
+      {'icon': Icons.fitness_center, 'label': 'Biceps Curl'},
+      {'icon': Icons.push_pin, 'label': 'Push-Up'},
     ];
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Egzersiz Seçimi'),
-        centerTitle: true,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: GridView.builder(
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
-            childAspectRatio: 0.95,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF282a36), Color(0xFF1e1f29)],
           ),
-          itemCount: exercises.length,
-          itemBuilder: (context, index) {
-            final ex = exercises[index];
-            return _ExerciseCard(
-              name: ex['name']!,
-              desc: ex['desc']!,
-              onStart: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const CameraScreen()),
-                );
-              },
-            );
-          },
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Egzersiz Seçimi', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Color(0xFFf8f8f2))),
+                    CircleAvatar(
+                      radius: 25,
+                      backgroundColor: Color(0xFF44475a),
+                      child: Icon(Icons.person, color: Color(0xFFf8f8f2), size: 30),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8),
+                Text('Bir egzersiz seçin:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF6272a4))),
+                SizedBox(height: 20),
+                Expanded(
+                  child: GridView.builder(
+                    itemCount: exercises.length,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 16,
+                      crossAxisSpacing: 16,
+                      childAspectRatio: 0.85,
+                    ),
+                    itemBuilder: (context, i) {
+                      final ex = exercises[i];
+                      return _ExerciseCard(
+                        icon: ex['icon'] as IconData,
+                        label: ex['label'] as String,
+                        selected: false,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const CameraScreen()),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -45,32 +74,48 @@ class ExerciseSelectionScreen extends StatelessWidget {
 }
 
 class _ExerciseCard extends StatelessWidget {
-  final String name;
-  final String desc;
-  final VoidCallback onStart;
-  const _ExerciseCard({required this.name, required this.desc, required this.onStart});
-
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _ExerciseCard({required this.icon, required this.label, required this.selected, required this.onTap});
   @override
   Widget build(BuildContext context) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Color(0xFF44475a),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 20,
+              offset: Offset(0, 10),
+            ),
+          ],
+          border: selected ? Border.all(color: Color(0xFFbd93f9), width: 3) : null,
+        ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(name, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Text(desc, style: Theme.of(context).textTheme.bodyMedium),
-            const Spacer(),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: onStart,
-                child: const Text('Başla'),
+            Container(
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Color(0xFFbd93f9).withOpacity(0.2),
+                shape: BoxShape.circle,
               ),
+              child: Icon(icon, color: Color(0xFFbd93f9), size: 50),
+            ),
+            SizedBox(height: 16),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFFf8f8f2),
+              ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),

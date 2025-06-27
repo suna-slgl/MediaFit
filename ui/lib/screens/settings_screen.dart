@@ -1,57 +1,148 @@
 import 'package:flutter/material.dart';
 
-class SettingsScreen extends StatefulWidget {
+class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
-
-  @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
-}
-
-class _SettingsScreenState extends State<SettingsScreen> {
-  bool soundOn = true;
-  bool darkMode = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Ayarlar'),
-        centerTitle: true,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF282a36), Color(0xFF1e1f29)],
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Ayarlar', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Color(0xFFf8f8f2))),
+                    CircleAvatar(
+                      radius: 25,
+                      backgroundColor: Color(0xFF44475a),
+                      child: Icon(Icons.person, color: Color(0xFFf8f8f2), size: 30),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 20),
+                Expanded(
+                  child: ListView(
+                    children: [
+                      _SettingsCard(
+                        icon: Icons.notifications,
+                        title: 'Bildirimler',
+                        subtitle: 'Egzersiz hatırlatıcıları',
+                        onTap: () {},
+                      ),
+                      _SettingsCard(
+                        icon: Icons.language,
+                        title: 'Dil',
+                        subtitle: 'Türkçe',
+                        onTap: () {},
+                      ),
+                      _SettingsCard(
+                        icon: Icons.palette,
+                        title: 'Tema',
+                        subtitle: 'Dracula tema',
+                        onTap: () {},
+                      ),
+                      _SettingsCard(
+                        icon: Icons.help,
+                        title: 'Yardım',
+                        subtitle: 'Kullanım kılavuzu',
+                        onTap: () {},
+                      ),
+                      _SettingsCard(
+                        icon: Icons.info,
+                        title: 'Hakkında',
+                        subtitle: 'Uygulama bilgileri',
+                        onTap: () {},
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    );
+  }
+}
+
+class _SettingsCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _SettingsCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: EdgeInsets.only(bottom: 16),
+        padding: EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Color(0xFF44475a),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 20,
+              offset: Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Row(
           children: [
-            SwitchListTile(
-              title: const Text('Sesli Bildirim'),
-              value: soundOn,
-              onChanged: (val) {
-                setState(() => soundOn = val);
-              },
-              secondary: const Icon(Icons.volume_up),
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Color(0xFFffb86c).withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: Color(0xFFffb86c), size: 30),
             ),
-            SwitchListTile(
-              title: const Text('Karanlık Mod'),
-              value: darkMode,
-              onChanged: (val) {
-                setState(() => darkMode = val);
-                // Tema değişimi için provider veya benzeri bir yapı kullanılabilir
-              },
-              secondary: const Icon(Icons.dark_mode),
-            ),
-            const SizedBox(height: 32),
-            const Text('Profil Bilgileri', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 12),
-            ListTile(
-              leading: const CircleAvatar(child: Icon(Icons.person)),
-              title: const Text('Kullanıcı Adı'),
-              subtitle: const Text('user@email.com'),
-              trailing: IconButton(
-                icon: const Icon(Icons.edit),
-                onPressed: () {},
+            SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFFf8f8f2),
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF6272a4),
+                    ),
+                  ),
+                ],
               ),
             ),
+            Icon(Icons.arrow_forward_ios, color: Color(0xFF6272a4), size: 20),
           ],
         ),
       ),
