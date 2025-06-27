@@ -8,8 +8,12 @@ from PIL import Image, ImageTk
 import threading
 import time
 import os
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '.')))
 from angle_analysis import calculate_angle, is_movement_correct
+
+
 
 # =============================================================================
 # DRACULA TEMA RENK PALETİ
@@ -190,6 +194,12 @@ class MainWindow:
         # Ctrl+C ile kapatma
         self.root.bind('<Control-c>', self.on_closing)
 
+        # Yeni değişkenler ekle
+        self.angles = []
+        self.correct_movements = []
+        self.start_time = None
+        self.is_tracking = False
+
     def apply_dracula_theme(self):
         """Dracula temasını uygula - Renkler ve stiller"""
         self.root.configure(bg=DRACULA_COLORS['bg'])
@@ -318,6 +328,10 @@ class MainWindow:
         self.quit_button = ModernButton(button_frame, text="Çıkış", command=self.on_closing)
         self.quit_button.pack(side=tk.RIGHT)
         
+        # Yeni buton
+        self.finish_button = ModernButton(button_frame, text="Seti Bitir", command=self.show_results)
+        self.finish_button.pack(side=tk.LEFT, padx=(10, 0))
+        
         # =====================================================================
         # ALT BİLGİ
         # =====================================================================
@@ -330,35 +344,34 @@ class MainWindow:
         """Kamera thread'ini başlat"""
         if self.is_running:
             return
-            
         self.is_running = True
         self.start_button.config(state="disabled")
         self.stop_button.config(state="normal")
         exercise = self.exercise_var.get()
-        
-        # Kamera thread'ini oluştur ve başlat
         self.thread = CameraThread(exercise, self.update_image, self.update_angle)
         self.thread.daemon = True
         self.thread.start()
+        # Ölçüm toplama başlat
+        self.angles = []
+        self.correct_movements = []
+        self.start_time = time.time()
+        self.is_tracking = True
 
     def stop_camera(self):
         """Kamera thread'ini durdur"""
         if not self.is_running:
             return
-            
         self.is_running = False
-        
         if self.thread:
             self.thread.stop()
-            # Thread'in durmasını bekle (maksimum 2 saniye)
             self.thread.join(timeout=2.0)
             if self.thread.is_alive():
                 print("Thread durdurulamadı, zorla kapatılıyor...")
             self.thread = None
-        
         self.start_button.config(state="normal")
         self.stop_button.config(state="disabled")
         self.camera_label.config(text="LIVE CAMERA", image="", anchor='center')
+        self.is_tracking = False
 
     def update_image(self, rgb_image):
         """Kamera görüntüsünü GUI'de güncelle"""
@@ -389,12 +402,15 @@ class MainWindow:
         """Açı bilgisini GUI'de güncelle"""
         if not self.is_running:
             return
-            
         try:
             if angle == -1:
                 self.angle_label.config(text="Açı: -", foreground=DRACULA_COLORS['comment'])
             else:
                 self.angle_label.config(text=f"Açı: {angle:.1f}°", foreground=DRACULA_COLORS['fg'])
+            # Ölçümü kaydet
+            if self.is_tracking and angle != -1:
+                self.angles.append(angle)
+                self.correct_movements.append(correct)
         except Exception as e:
             print(f"Açı güncelleme hatası: {e}")
 
@@ -412,6 +428,128 @@ class MainWindow:
         
         os._exit(0) # Zorla çıkış
 
+    def show_results(self):
+        self.is_tracking = False
+        duration = time.time() - self.start_time if self.start_time else 0
+        avg_angle = np.mean(self.angles) if self.angles else 0
+        correct = sum(self.correct_movements)
+        incorrect = len(self.correct_movements) - correct
+        stats = {
+            'duration': duration,
+            'average_angle': avg_angle,
+            'correct_movements': correct,
+            'incorrect_movements': incorrect
+        }
+        ResultsWindow(self.root, stats)
+
+# =============================================================================
+# RESULT WINDOW SINIFI (ResultsWindow)
+# =============================================================================
+class ResultsWindow:
+    def __init__(self, parent, stats):
+        # --- PENCERE OLUŞTURMA VE TEMEL AYARLAR ---
+        self.window = tk.Toplevel(parent)
+        self.window.title("Egzersiz Sonuçları")
+        # Ana pencere ile aynı boyut
+        self.window.geometry("500x900")
+        self.window.configure(bg=DRACULA_COLORS['bg'])
+        # Pencereyi merkeze yerleştir ve odakla
+        self.window.transient(parent)
+        self.window.grab_set()
+        self.stats = stats
+        self.create_widgets()
+    
+    def create_widgets(self):
+        # --- ANA FRAME VE BAŞLIK ---
+        main_frame = ttk.Frame(self.window, style='Dracula.TFrame', padding="20")
+        main_frame.pack(fill=tk.BOTH, expand=True)
+        title_label = ttk.Label(main_frame, text="EGZERSİZ SONUÇLARI", 
+                               style='Title.TLabel')
+        title_label.pack(pady=(0, 20))
+        
+        # --- İSTATİSTİKLERİ İKİ ALANA AYIR ---
+        stats_frame = ttk.Frame(main_frame, style='Dracula.TFrame')
+        stats_frame.pack(fill=tk.X, pady=(0, 30))
+        
+        # Sol istatistikler: % doğruluk oranı
+        left_stats = ttk.Frame(stats_frame, style='Card.TFrame', padding="15")
+        left_stats.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
+        ttk.Label(
+            left_stats, text="GENEL BAŞARI ORANI", style='Subtitle.TLabel',
+            font=('Roboto', 12, 'bold'), background=DRACULA_COLORS['frame_bg']
+        ).pack(pady=(0, 10), fill='x')
+        total = self.stats['correct_movements'] + self.stats['incorrect_movements']
+        accuracy = (self.stats['correct_movements'] / total * 100) if total > 0 else 0
+        accuracy_text = f"%{accuracy:.1f}"
+        accuracy_label = ttk.Label(
+            left_stats, text=accuracy_text,
+            style='Title.TLabel',
+            foreground=DRACULA_COLORS['green'],
+            background=DRACULA_COLORS['frame_bg'],
+            font=('Roboto', 24, 'bold'),
+            anchor='center', justify='center'
+        )
+        accuracy_label.pack(pady=(10, 0), fill='x')
+        
+        # Sağ istatistikler: toplam süre ve ortalama açı
+        right_stats = ttk.Frame(stats_frame, style='Card.TFrame', padding="15")
+        right_stats.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=(10, 0))
+        ttk.Label(
+            right_stats, text="İSTATİSTİKLER", style='Subtitle.TLabel',
+            font=('Roboto', 12, 'bold'), background=DRACULA_COLORS['frame_bg']
+        ).pack(pady=(0, 10), fill='x')
+        details_text = f"""Toplam Süre: {self.stats['duration']:.1f} saniye\nOrtalama Açı: {self.stats['average_angle']:.1f}°"""
+        details_label = ttk.Label(
+            right_stats, text=details_text,
+            style='Dracula.TLabel',
+            font=('Roboto', 12, 'bold'),
+            background=DRACULA_COLORS['frame_bg'],
+            justify='center', anchor='center'
+        )
+        details_label.pack(fill='x')
+        
+        # --- PASTA GRAFİĞİ BLOKU ---
+        self.create_pie_chart(main_frame)
+        
+        # --- KAPAT BUTONU BLOKU ---
+        close_button = ModernButton(main_frame, text="Kapat", 
+                                   command=self.window.destroy)
+        close_button.pack(pady=(30, 0))
+    
+    def create_pie_chart(self, parent):
+        # --- PASTA GRAFİĞİ FRAME'İ VE MATPLOTLIB OLUŞTURMA ---
+        chart_frame = ttk.Frame(parent, style='Card.TFrame', padding="15")
+        chart_frame.pack(fill=tk.BOTH, expand=True)
+        fig, ax = plt.subplots(figsize=(4, 4))
+        fig.patch.set_facecolor(DRACULA_COLORS['bg'])
+        ax.set_facecolor(DRACULA_COLORS['bg'])
+        # --- GRAFİK VERİLERİNİ HAZIRLA ---
+        labels = ['Doğru', 'Yanlış']
+        sizes = [self.stats.get('correct_movements', 0), self.stats.get('incorrect_movements', 0)]
+        colors = [DRACULA_COLORS['green'], DRACULA_COLORS['red']]
+        # --- VERİ YOKSA UYARI, VARSA GRAFİK ÇİZ ---
+        if sum(sizes) == 0:
+            ax.text(0.5, 0.5, 'Veri Yok', color=DRACULA_COLORS['fg'],
+                    fontsize=16, ha='center', va='center')
+            ax.axis('off')
+        else:
+            wedges, texts, autotexts = ax.pie(
+                sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=90
+            )
+            ax.set_title('Hareket Doğruluk Dağılımı', color=DRACULA_COLORS['purple'], 
+                         fontsize=16, fontweight='bold', pad=20)
+            for text in texts:
+                text.set_color(DRACULA_COLORS['fg'])
+                text.set_fontsize(14)
+            for autotext in autotexts:
+                autotext.set_color(DRACULA_COLORS['bg'])
+                autotext.set_fontsize(16)
+                autotext.set_fontweight('bold')
+        # --- GRAFİĞİ TKINTER CANVAS'A EKLE ---
+        canvas = FigureCanvasTkAgg(fig, chart_frame)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
 if __name__ == "__main__":
     try:
         root = tk.Tk()
@@ -423,3 +561,7 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Hata: {e}")
         os._exit(1)
+
+
+
+        
